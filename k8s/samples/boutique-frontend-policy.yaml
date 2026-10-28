@@ -1,0 +1,36 @@
+apiVersion: autoscaling.carbonpilot.io/v1alpha1
+kind: CarbonPolicy
+metadata:
+  name: boutique-frontend-policy
+  namespace: online-boutique
+  labels:
+    app.kubernetes.io/name: carbon-pilot
+    app.kubernetes.io/part-of: online-boutique
+    environment: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend
+  gridRegion: us-east-1
+  minReplicas: 3
+  maxReplicas: 24
+  targetCpuUtilizationPercentage: 65
+  sloLatencyCeilingMs: 150
+  carbonSensitivityAlpha: 0.75
+  carbonDataConnector:
+    provider: ElectricityMaps
+    pollingIntervalSeconds: 60
+    cacheTtlSeconds: 300
+    fallbackCarbonIntensity: 420
+  stabilizationWindow:
+    scaleUpCooldownSeconds: 60
+    scaleDownCooldownSeconds: 300
+    maxScaleDownStepPercentage: 25
+  behavior:
+    scaleUp:
+      urgency: PerformanceFirst
+      allowDeferredScaling: false
+    scaleDown:
+      urgency: EcoConservative
+      deferWhenCarbonSurge: true

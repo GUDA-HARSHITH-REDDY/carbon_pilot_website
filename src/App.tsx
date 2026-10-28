@@ -7,9 +7,10 @@ import { LiveDashboard } from './components/LiveDashboard';
 import { CrdInspector } from './components/CrdInspector';
 import { TechStackMatrix } from './components/TechStackMatrix';
 import { BenchmarkEvaluation } from './components/BenchmarkEvaluation';
+import { DemoScriptModal } from './components/DemoScriptModal';
 import { Footer } from './components/Footer';
 import { INITIAL_REGIONS, INITIAL_MICROSERVICES } from './data/mockData';
-import { GridRegion, MicroserviceDeployment, ThemeColor } from './types';
+import { GridRegion, MicroserviceDeployment } from './types';
 
 export function App() {
   const [regions, setRegions] = useState<GridRegion[]>(INITIAL_REGIONS);
@@ -17,15 +18,16 @@ export function App() {
   const [microservices, setMicroservices] = useState<MicroserviceDeployment[]>(INITIAL_MICROSERVICES);
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [isSimulating, setIsSimulating] = useState<boolean>(true);
-  const [themeColor, setThemeColor] = useState<ThemeColor>('emerald');
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState<boolean>(false);
 
   const toggleSimulation = () => {
     setIsSimulating((prev) => !prev);
   };
 
   return (
-    <div className={`min-h-screen text-slate-100 flex flex-col font-sans theme-${themeColor}`}>
-      {/* Top Navbar */}
+    <div className="min-h-screen bg-[#070c18] text-slate-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
+      
+      {/* Top Navigation Shell */}
       <Navbar
         regions={regions}
         activeRegion={activeRegion}
@@ -34,32 +36,28 @@ export function App() {
         setActiveTab={setActiveTab}
         isSimulating={isSimulating}
         toggleSimulation={toggleSimulation}
-        themeColor={themeColor}
-        setThemeColor={setThemeColor}
+        onStartDemoWalkthrough={() => setIsDemoModalOpen(true)}
       />
 
       {/* Main Content Area */}
       <main className="flex-1">
+        
         {/* Hero Section */}
         <HeroSection
           activeRegion={activeRegion}
           onExploreArchitecture={() => setActiveTab('architecture')}
           onLaunchSimulator={() => setActiveTab('simulator')}
           onOpenDashboard={() => setActiveTab('dashboard')}
-          themeColor={themeColor}
+          onOpenEvaluation={() => setActiveTab('evaluation')}
         />
 
         {/* Tab-driven Content Container */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
           
-          {/* Section: Overview (All high-level highlights) */}
+          {/* TAB: Overview (Full integrated control center) */}
           {activeTab === 'overview' && (
-            <div className="space-y-12">
-              <section id="architecture-preview">
-                <ArchitectureViewer />
-              </section>
-
-              <section id="simulator-preview">
+            <div className="space-y-10 animate-fade-in">
+              <section id="simulator-overview">
                 <LiveSimulator
                   activeRegion={activeRegion}
                   microservices={microservices}
@@ -68,35 +66,39 @@ export function App() {
                 />
               </section>
 
-              <section id="dashboard-preview">
+              <section id="dashboard-overview">
                 <LiveDashboard
                   activeRegion={activeRegion}
                   microservices={microservices}
                 />
               </section>
 
-              <section id="crd-preview">
+              <section id="architecture-overview">
+                <ArchitectureViewer />
+              </section>
+
+              <section id="evaluation-overview">
+                <BenchmarkEvaluation />
+              </section>
+
+              <section id="crd-overview">
                 <CrdInspector />
               </section>
 
-              <section id="techstack-preview">
+              <section id="techstack-overview">
                 <TechStackMatrix />
-              </section>
-
-              <section id="benchmark-preview">
-                <BenchmarkEvaluation />
               </section>
             </div>
           )}
 
-          {/* Section: Architecture only */}
+          {/* TAB: Architecture Only */}
           {activeTab === 'architecture' && (
             <div className="animate-fade-in">
               <ArchitectureViewer />
             </div>
           )}
 
-          {/* Section: Simulator only */}
+          {/* TAB: Simulator Only */}
           {activeTab === 'simulator' && (
             <div className="animate-fade-in">
               <LiveSimulator
@@ -108,7 +110,7 @@ export function App() {
             </div>
           )}
 
-          {/* Section: Live Dashboard only */}
+          {/* TAB: Live Telemetry Dashboard Only */}
           {activeTab === 'dashboard' && (
             <div className="animate-fade-in">
               <LiveDashboard
@@ -118,31 +120,38 @@ export function App() {
             </div>
           )}
 
-          {/* Section: CRD Configurator */}
+          {/* TAB: CRD Configurator */}
           {activeTab === 'crd' && (
             <div className="animate-fade-in">
               <CrdInspector />
             </div>
           )}
 
-          {/* Section: Tech Stack */}
+          {/* TAB: Evaluation Benchmark Results */}
+          {activeTab === 'evaluation' && (
+            <div className="animate-fade-in">
+              <BenchmarkEvaluation />
+            </div>
+          )}
+
+          {/* TAB: Tech Stack */}
           {activeTab === 'techstack' && (
             <div className="animate-fade-in">
               <TechStackMatrix />
             </div>
           )}
 
-          {/* Section: Evaluation Benchmark */}
-          {activeTab === 'benchmark' && (
-            <div className="animate-fade-in">
-              <BenchmarkEvaluation />
-            </div>
-          )}
-
         </div>
       </main>
 
-      {/* Footer */}
+      {/* Interactive Hackathon Demo Script Modal */}
+      <DemoScriptModal
+        isOpen={isDemoModalOpen}
+        onClose={() => setIsDemoModalOpen(false)}
+        setActiveTab={setActiveTab}
+      />
+
+      {/* Global Application Footer */}
       <Footer />
     </div>
   );

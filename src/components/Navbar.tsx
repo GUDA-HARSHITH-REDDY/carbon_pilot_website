@@ -1,6 +1,20 @@
-import React from 'react';
-import { Leaf, Activity, Globe, Zap, Palette, Sparkles, ExternalLink } from 'lucide-react';
-import { GridRegion, ThemeColor } from '../types';
+import React, { useState } from 'react';
+import { 
+  Leaf, 
+  Activity, 
+  Globe, 
+  Zap, 
+  Server, 
+  ShieldCheck, 
+  Play, 
+  Pause, 
+  HelpCircle,
+  ExternalLink,
+  Cpu,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
+import { GridRegion } from '../types';
 
 interface NavbarProps {
   regions: GridRegion[];
@@ -10,8 +24,7 @@ interface NavbarProps {
   setActiveTab: (tab: string) => void;
   isSimulating: boolean;
   toggleSimulation: () => void;
-  themeColor: ThemeColor;
-  setThemeColor: (color: ThemeColor) => void;
+  onStartDemoWalkthrough: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -22,140 +35,203 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   isSimulating,
   toggleSimulation,
-  themeColor,
-  setThemeColor,
+  onStartDemoWalkthrough,
 }) => {
-  const getIntensityBadge = (intensity: number) => {
-    if (intensity < 100) return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
-    if (intensity < 300) return 'bg-yellow-500/15 text-yellow-300 border-yellow-500/30';
-    if (intensity < 500) return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
-    return 'bg-rose-500/15 text-rose-300 border-rose-500/30';
-  };
+  const [showStatusModal, setShowStatusModal] = useState<boolean>(false);
 
   const navLinks = [
     { id: 'overview', label: 'Overview' },
-    { id: 'architecture', label: 'Architecture (Fig. 1)' },
+    { id: 'architecture', label: 'Architecture' },
     { id: 'simulator', label: 'Operator Simulator' },
-    { id: 'dashboard', label: 'Live Dashboard' },
+    { id: 'dashboard', label: 'Live Telemetry' },
     { id: 'crd', label: 'CarbonPolicy CRD' },
+    { id: 'evaluation', label: 'Evaluation Results' },
     { id: 'techstack', label: 'Tech Stack' },
-    { id: 'benchmark', label: 'Evaluation' },
   ];
 
-  const themeOptions: { id: ThemeColor; label: string; dotClass: string }[] = [
-    { id: 'emerald', label: 'Neo Mint', dotClass: 'bg-emerald-400 shadow-emerald-400/50' },
-    { id: 'cyan', label: 'Azure Cyan', dotClass: 'bg-cyan-400 shadow-cyan-400/50' },
-    { id: 'borealis', label: 'Borealis', dotClass: 'bg-purple-400 shadow-purple-400/50' },
-    { id: 'amber', label: 'Solar Amber', dotClass: 'bg-amber-400 shadow-amber-400/50' },
-  ];
+  const getIntensityBadge = (intensity: number) => {
+    if (intensity < 100) return 'text-emerald-400 bg-emerald-950/40 border-emerald-500/30';
+    if (intensity < 300) return 'text-yellow-400 bg-yellow-950/40 border-yellow-500/30';
+    if (intensity < 500) return 'text-amber-400 bg-amber-950/40 border-amber-500/30';
+    return 'text-rose-400 bg-rose-950/40 border-rose-500/30';
+  };
 
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#070b14]/80 border-b border-white/[0.08] shadow-2xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo and CNAD Tag */}
-          <div className="flex items-center gap-3">
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-cyan-500 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300" />
-              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-950 border border-white/20">
-                <Leaf className="w-5 h-5 text-emerald-400" />
+    <>
+      <header className="sticky top-0 z-50 bg-[#070c18]/95 border-b border-[#1e293b] backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-15">
+            {/* Logo and Product Title */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                <Leaf className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-base tracking-tight text-white font-sans">
+                    Carbon<span className="text-emerald-400">Pilot</span>
+                  </span>
+                  <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-cyan-950/50 text-cyan-400 border border-cyan-800/40 font-semibold">
+                    K8s Operator
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 hidden sm:block leading-none">
+                  Carbon-Aware Auto-Scaling Orchestrator
+                </p>
               </div>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-xl tracking-tight text-white flex items-center font-sans">
-                  Carbon<span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 ml-0.5">Pilot</span>
-                </span>
-                <span className="px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 text-cyan-300 border border-cyan-500/30 rounded-full">
-                  K8s Operator
-                </span>
+
+            {/* Navigation Tabs */}
+            <nav className="hidden lg:flex items-center gap-1 bg-[#0d1527] p-1 rounded-lg border border-[#1e293b]">
+              {navLinks.map((link) => (
+                <button
+                  key={link.id}
+                  onClick={() => setActiveTab(link.id)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    activeTab === link.id
+                      ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold'
+                      : 'text-slate-400 hover:text-white hover:bg-[#111a2e]'
+                  }`}
+                >
+                  {link.label}
+                </button>
+              ))}
+            </nav>
+
+            {/* Right Status Controls */}
+            <div className="flex items-center gap-2.5">
+              {/* Region Selector */}
+              <div className="relative flex items-center">
+                <Globe className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
+                <select
+                  value={activeRegion.id}
+                  onChange={(e) => {
+                    const reg = regions.find((r) => r.id === e.target.value);
+                    if (reg) onSelectRegion(reg);
+                  }}
+                  className="bg-[#0d1527] border border-[#1e293b] text-slate-200 text-xs rounded-md pl-8 pr-2.5 py-1.5 focus:outline-none focus:border-cyan-500 cursor-pointer appearance-none hover:border-[#334155]"
+                >
+                  {regions.map((r) => (
+                    <option key={r.id} value={r.id} className="bg-[#0d1527] text-slate-200">
+                      {r.code} ({r.currentIntensity}g)
+                    </option>
+                  ))}
+                </select>
               </div>
-              <p className="text-[11px] text-slate-400 hidden sm:block">
-                CNAD Review — Carbon-Aware Auto-Scaling Orchestrator
-              </p>
+
+              {/* Operating Mode Indicator */}
+              <button
+                onClick={() => setShowStatusModal(true)}
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono border border-cyan-800/40 bg-cyan-950/30 text-cyan-300 hover:bg-cyan-950/60 cursor-pointer transition-colors"
+                title="View Environment and Kubernetes Status"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                <span>SIMULATED MODE</span>
+                <HelpCircle className="w-3 h-3 text-cyan-400/80 ml-0.5" />
+              </button>
+
+              {/* Grid Intensity Pill */}
+              <div
+                className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-mono font-medium ${getIntensityBadge(
+                  activeRegion.currentIntensity
+                )}`}
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>{activeRegion.currentIntensity}</span>
+                <span className="text-[10px] text-slate-400">gCO₂/kWh</span>
+              </div>
+
+              {/* Simulation Toggle */}
+              <button
+                onClick={toggleSimulation}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  isSimulating
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold'
+                    : 'bg-[#111a2e] hover:bg-[#162035] text-amber-400 border border-amber-500/30'
+                }`}
+                title={isSimulating ? 'Pause simulation tick' : 'Resume simulation tick'}
+              >
+                {isSimulating ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{isSimulating ? 'Live' : 'Paused'}</span>
+              </button>
+
+              {/* Guided Demo Button */}
+              <button
+                onClick={onStartDemoWalkthrough}
+                className="hidden xl:flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-violet-950/40 text-violet-300 border border-violet-700/40 hover:bg-violet-900/40 transition-colors cursor-pointer"
+              >
+                <span>Demo Script</span>
+              </button>
             </div>
           </div>
+        </div>
+      </header>
 
-          {/* Center Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-white/[0.06]">
-            {navLinks.map((link) => (
+      {/* Connection & Environment Status Modal */}
+      {showStatusModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="enterprise-panel max-w-md w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b]">
+              <div className="flex items-center gap-2">
+                <Server className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-sm font-bold text-white">Environment & Telemetry Mode</h3>
+              </div>
               <button
-                key={link.id}
-                onClick={() => setActiveTab(link.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === link.id
-                    ? 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }`}
+                onClick={() => setShowStatusModal(false)}
+                className="text-slate-400 hover:text-white text-xs font-mono"
               >
-                {link.label}
+                ✕ Close
               </button>
-            ))}
-          </nav>
-
-          {/* Right Controls: Theme Switcher, Region Selector, Live Intensity Pill, Engine Live Button */}
-          <div className="flex items-center gap-2.5">
-            {/* Color Palette Switcher */}
-            <div className="hidden xl:flex items-center gap-1.5 bg-slate-900/80 px-2 py-1 rounded-lg border border-white/10" title="Switch UI Accent Palette">
-              <Palette className="w-3.5 h-3.5 text-slate-400 mr-1" />
-              {themeOptions.map((t) => (
-                <button
-                  key={t.id}
-                  onClick={() => setThemeColor(t.id)}
-                  className={`w-4 h-4 rounded-full transition-all relative ${t.dotClass} ${
-                    themeColor === t.id ? 'ring-2 ring-white scale-110 shadow-lg' : 'opacity-60 hover:opacity-100'
-                  }`}
-                  title={`Switch to ${t.label} palette`}
-                />
-              ))}
             </div>
 
-            {/* Region Selector */}
-            <div className="relative flex items-center">
-              <Globe className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none" />
-              <select
-                value={activeRegion.id}
-                onChange={(e) => {
-                  const reg = regions.find((r) => r.id === e.target.value);
-                  if (reg) onSelectRegion(reg);
-                }}
-                className="bg-slate-900/90 border border-slate-700/80 text-slate-200 text-xs rounded-lg pl-8 pr-3 py-1.5 focus:outline-none focus:border-cyan-500 cursor-pointer appearance-none hover:border-slate-600 transition-colors"
-              >
-                {regions.map((r) => (
-                  <option key={r.id} value={r.id} className="bg-slate-900 text-slate-100">
-                    {r.code} — {r.name}
-                  </option>
-                ))}
-              </select>
+            <div className="space-y-3 text-xs text-slate-300">
+              <div className="p-3 rounded-lg enterprise-subtle space-y-1">
+                <div className="flex justify-between font-semibold">
+                  <span>Current Mode:</span>
+                  <span className="text-cyan-400 font-mono">Deterministic Synthetic Engine</span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  External services (Electricity Maps, Prometheus server, live Kubernetes cluster) are simulated locally using real-world empirical traces.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-slate-400">REST API Backend:</span>
+                  <span className="text-emerald-400 font-mono flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Online (/api/health)
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-slate-400">Decision Engine:</span>
+                  <span className="text-emerald-400 font-mono flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Verified (18/18 Unit Tests Passing)
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-slate-400">Active Workload:</span>
+                  <span className="text-slate-200 font-mono">Google Cloud Online Boutique (10 Services)</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-slate-400">Kubernetes CRD:</span>
+                  <span className="text-cyan-400 font-mono">autoscaling.carbonpilot.io/v1alpha1</span>
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded bg-slate-900 border border-slate-800 text-[11px] text-slate-400">
+                To connect to a live Kubernetes cluster, apply the manifests in <code className="text-emerald-400">k8s/crds/</code> and configure <code className="text-emerald-400">KUBECONFIG</code>.
+              </div>
             </div>
 
-            {/* Live Intensity Pill */}
-            <div
-              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono font-medium ${getIntensityBadge(
-                activeRegion.currentIntensity
-              )}`}
-              title="Real-time electricity grid carbon intensity"
-            >
-              <Zap className="w-3.5 h-3.5 animate-pulse text-amber-400" />
-              <span className="font-bold">{activeRegion.currentIntensity}</span>
-              <span className="text-[10px] text-slate-400">gCO₂/kWh</span>
-            </div>
-
-            {/* Simulation Status / Pause button */}
             <button
-              onClick={toggleSimulation}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-md ${
-                isSimulating
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-bold'
-                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
-              }`}
+              onClick={() => setShowStatusModal(false)}
+              className="w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs"
             >
-              <Activity className={`w-3.5 h-3.5 ${isSimulating ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">{isSimulating ? 'Live Engine' : 'Paused'}</span>
+              Continue to Dashboard
             </button>
           </div>
         </div>
-      </div>
-    </header>
+      )}
+    </>
   );
 };

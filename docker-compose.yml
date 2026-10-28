@@ -1,0 +1,20 @@
+services:
+  carbon-pilot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: carbon-pilot-control-plane
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      - LOG_LEVEL=info
+      - CARBON_SIGNAL_PROVIDER=electricity-maps
+      - DEFAULT_GRID_ZONE=US-VA
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped

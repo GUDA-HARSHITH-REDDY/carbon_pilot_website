@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: carbon-pilot-operator-metrics
+  namespace: carbon-pilot-system
+  labels:
+    app.kubernetes.io/name: carbon-pilot-operator
+    app.kubernetes.io/component: controller
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: carbon-pilot-operator
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
+      scrapeTimeout: 10s
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: "carbon_pilot_.*"
+          action: keep
