@@ -50,6 +50,19 @@ describe('Carbon Pilot REST API Endpoints', () => {
     assert.equal(res.body[0].serviceName, 'frontend');
   });
 
+  test('GET /api/policies/:id returns specific policy by ID', async () => {
+    const res = await request('/api/policies/frontend');
+    assert.equal(res.status, 200);
+    assert.equal(res.body.id, 'frontend');
+    assert.equal(res.body.serviceName, 'frontend');
+    assert.ok(typeof res.body.baseCpuThreshold === 'number');
+  });
+
+  test('GET /api/policies/:id returns 404 for unknown policy', async () => {
+    const res = await request('/api/policies/non-existent-service');
+    assert.equal(res.status, 404);
+  });
+
   test('PUT /api/policies/:id rejects invalid guardrail parameters with 422', async () => {
     const res = await request('/api/policies/frontend', {
       method: 'PUT',

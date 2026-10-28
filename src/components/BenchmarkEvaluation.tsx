@@ -13,7 +13,7 @@ import {
   BookOpen,
   Info
 } from 'lucide-react';
-import { executeExperiment, EVALUATION_SCENARIOS } from '../../server/server.mjs';
+import { executeExperiment, EVALUATION_SCENARIOS } from '../../server/engine.mjs';
 
 export const BenchmarkEvaluation: React.FC = () => {
   const [selectedScenarioId, setSelectedScenarioId] = useState<string>('scenario-diurnal-24h');

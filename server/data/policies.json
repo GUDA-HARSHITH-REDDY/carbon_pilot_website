@@ -17,7 +17,9 @@
     "cooldownSeconds": 30,
     "nominalRpsPerReplica": 120,
     "status": "active",
-    "updatedAt": "2026-10-28T17:19:47.610Z"
+    "updatedAt": "2026-10-28T17:42:41.141Z",
+    "error": "Route not found",
+    "path": "/api/policies/frontend"
   },
   {
     "id": "cartservice",

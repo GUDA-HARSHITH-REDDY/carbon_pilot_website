@@ -158,12 +158,30 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Guided Demo Button */}
               <button
                 onClick={onStartDemoWalkthrough}
-                className="hidden xl:flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-violet-950/40 text-violet-300 border border-violet-700/40 hover:bg-violet-900/40 transition-colors cursor-pointer"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-semibold bg-violet-950/40 text-violet-300 border border-violet-700/40 hover:bg-violet-900/40 transition-colors cursor-pointer"
+                title="Launch 11-step hackathon pitch guide"
               >
                 <span>Demo Script</span>
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Mobile & Tablet Tab Strip (< lg) */}
+        <div className="lg:hidden border-t border-[#1e293b] bg-[#070c18] px-4 py-2 overflow-x-auto flex items-center gap-1.5 text-xs">
+          {navLinks.map((link) => (
+            <button
+              key={link.id}
+              onClick={() => setActiveTab(link.id)}
+              className={`px-2.5 py-1 rounded-md text-xs whitespace-nowrap transition-colors flex-shrink-0 cursor-pointer ${
+                activeTab === link.id
+                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold'
+                  : 'text-slate-400 hover:text-white bg-[#0d1527] border border-[#1e293b]'
+              }`}
+            >
+              {link.label}
+            </button>
+          ))}
         </div>
       </header>
 

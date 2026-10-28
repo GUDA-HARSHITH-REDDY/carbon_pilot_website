@@ -148,4 +148,40 @@ describe('Carbon-Aware Scaling Decision Engine', () => {
     assert.ok(trace.sloGuardrailCheck.sloLatencyCeilingMs === 150);
     assert.ok(typeof trace.justification === 'string' && trace.justification.length > 10);
   });
+
+  test('Clamps desired replicas strictly within [minReplicas, maxReplicas]', () => {
+    // Ultra low load: 10 RPS on minReplicas=2
+    const lowDecision = evaluateScalingPolicy({
+      currentRps: 10,
+      currentReplicas: 2,
+      currentLatencyP99: 30,
+      carbonIntensity: 600,
+      policy: defaultPolicy,
+      lastScaleTimestamp: Date.now() - 60000,
+    });
+    assert.ok(lowDecision.targetReplicas >= defaultPolicy.minReplicas, 'Must not drop below minReplicas');
+
+    // Massive overload: 100,000 RPS
+    const highDecision = evaluateScalingPolicy({
+      currentRps: 100000,
+      currentReplicas: 25,
+      currentLatencyP99: 100,
+      carbonIntensity: 100,
+      policy: defaultPolicy,
+      lastScaleTimestamp: Date.now() - 60000,
+    });
+    assert.ok(highDecision.targetReplicas <= defaultPolicy.maxReplicas, 'Must not exceed maxReplicas');
+  });
+});
+
+describe('Benchmark Experiment Execution', () => {
+  test('executeExperiment computes 24h diurnal benchmark with verified carbon savings', async () => {
+    const { executeExperiment, EVALUATION_SCENARIOS } = await import('../server/engine.mjs');
+    const result = executeExperiment('scenario-diurnal-24h');
+    assert.equal(result.totalHours, 24);
+    assert.equal(result.hourlyTrace.length, 24);
+    assert.ok(result.summary.netCarbonAvoidedKg >= 0);
+    assert.ok(result.summary.netEnergySavedKWh >= 0);
+    assert.ok(result.summary.sloComplianceRate >= 95);
+  });
 });

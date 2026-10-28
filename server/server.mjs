@@ -8,7 +8,12 @@ import {
   calculatePowerWatts,
   calculateEnergyKWh,
   calculateEmissionsGrams,
+  DEFAULT_POLICIES,
+  EVALUATION_SCENARIOS,
+  executeExperiment,
 } from './engine.mjs';
+
+export { DEFAULT_POLICIES, EVALUATION_SCENARIOS, executeExperiment };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,70 +25,6 @@ if (!fs.existsSync(DATA_DIR)) {
 
 const POLICIES_FILE = path.join(DATA_DIR, 'policies.json');
 const EXPERIMENTS_FILE = path.join(DATA_DIR, 'experiments.json');
-
-// Initial default policies for Google Online Boutique microservices
-const DEFAULT_POLICIES = [
-  {
-    id: 'frontend',
-    serviceName: 'frontend',
-    namespace: 'boutique',
-    targetRefKind: 'Deployment',
-    targetRefName: 'frontend',
-    carbonSource: 'electricity-maps',
-    zone: 'US-VA',
-    baseCpuThreshold: 60,
-    maxAllowedCpuThreshold: 80,
-    carbonWeightAlpha: 0.75,
-    sloLatencyCeilingMs: 150,
-    safetyMarginMs: 25,
-    minReplicas: 3,
-    maxReplicas: 30,
-    cooldownSeconds: 30,
-    nominalRpsPerReplica: 120,
-    status: 'active',
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'cartservice',
-    serviceName: 'cartservice',
-    namespace: 'boutique',
-    targetRefKind: 'Deployment',
-    targetRefName: 'cartservice',
-    carbonSource: 'electricity-maps',
-    zone: 'US-VA',
-    baseCpuThreshold: 55,
-    maxAllowedCpuThreshold: 75,
-    carbonWeightAlpha: 0.70,
-    sloLatencyCeilingMs: 120,
-    safetyMarginMs: 20,
-    minReplicas: 2,
-    maxReplicas: 20,
-    cooldownSeconds: 30,
-    nominalRpsPerReplica: 100,
-    status: 'active',
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'recommendationservice',
-    serviceName: 'recommendationservice',
-    namespace: 'boutique',
-    targetRefKind: 'Deployment',
-    targetRefName: 'recommendationservice',
-    carbonSource: 'electricity-maps',
-    zone: 'US-VA',
-    baseCpuThreshold: 65,
-    maxAllowedCpuThreshold: 85,
-    carbonWeightAlpha: 0.85,
-    sloLatencyCeilingMs: 300,
-    safetyMarginMs: 40,
-    minReplicas: 2,
-    maxReplicas: 25,
-    cooldownSeconds: 30,
-    nominalRpsPerReplica: 90,
-    status: 'active',
-    updatedAt: new Date().toISOString(),
-  },
-];
 
 // Initialize durable files if missing
 if (!fs.existsSync(POLICIES_FILE)) {
@@ -100,145 +41,6 @@ function readPolicies() {
 
 function writePolicies(policies) {
   fs.writeFileSync(POLICIES_FILE, JSON.stringify(policies, null, 2));
-}
-
-// Evaluation Benchmark Scenarios
-export const EVALUATION_SCENARIOS = [
-  {
-    id: 'scenario-diurnal-24h',
-    name: '24-Hour Diurnal Web Traffic (Standard Day)',
-    description: 'Realistic e-commerce traffic trace mirroring daytime surge and midnight baseload against PJM Virginia grid carbon curve.',
-    hours: 24,
-    trafficTrace: [
-      320, 280, 240, 220, 260, 410, 680, 950, 1240, 1450, 1620, 1680,
-      1720, 1690, 1580, 1420, 1310, 1280, 1350, 1420, 1260, 980, 640, 420
-    ],
-    carbonTrace: [
-      380, 395, 410, 430, 450, 465, 455, 435, 420, 390, 370, 355,
-      360, 385, 415, 445, 460, 450, 435, 420, 410, 395, 385, 380
-    ],
-  },
-  {
-    id: 'scenario-carbon-spike',
-    name: 'Sudden Evening Grid Carbon Spike',
-    description: 'Cloudy wind-lull during evening peak hours causes carbon intensity to spike from 140 to 620 gCO2e/kWh.',
-    hours: 24,
-    trafficTrace: [
-      500, 500, 500, 500, 600, 700, 900, 1100, 1200, 1200, 1200, 1200,
-      1200, 1200, 1200, 1200, 1300, 1400, 1400, 1300, 1100, 900, 700, 500
-    ],
-    carbonTrace: [
-      120, 115, 120, 130, 160, 210, 280, 340, 320, 290, 250, 220,
-      210, 240, 310, 420, 580, 640, 650, 620, 510, 420, 280, 180
-    ],
-  },
-  {
-    id: 'scenario-flash-sale',
-    name: 'Flash Sale Traffic Surge (Performance Stress Test)',
-    description: 'Workload triples within minutes to demonstrate that performance & SLO guardrails strictly override carbon savings.',
-    hours: 24,
-    trafficTrace: [
-      400, 400, 400, 400, 500, 600, 800, 1200, 2400, 3200, 3400, 3100,
-      2200, 1500, 1200, 1100, 1000, 1000, 1000, 900, 800, 700, 500, 400
-    ],
-    carbonTrace: [
-      420, 420, 420, 420, 420, 420, 450, 480, 510, 550, 540, 520,
-      490, 470, 450, 440, 430, 430, 420, 420, 420, 420, 420, 420
-    ],
-  },
-];
-
-/**
- * Runs a comparative experiment over a given scenario trace
- */
-export function executeExperiment(scenarioId, policy = DEFAULT_POLICIES[0]) {
-  const scenario = EVALUATION_SCENARIOS.find((s) => s.id === scenarioId) || EVALUATION_SCENARIOS[0];
-  const results = [];
-
-  let cumBaseKWh = 0;
-  let cumOptKWh = 0;
-  let cumBaseEmissionsGrams = 0;
-  let cumOptEmissionsGrams = 0;
-  let totalSloChecks = 0;
-  let sloCompliantChecks = 0;
-
-  for (let i = 0; i < scenario.hours; i++) {
-    const rps = scenario.trafficTrace[i];
-    const intensity = scenario.carbonTrace[i];
-    const latencyBase = Math.round(55 + (rps / (policy.nominalRpsPerReplica * 8)) * 30);
-
-    const decision = evaluateScalingPolicy({
-      currentRps: rps,
-      currentReplicas: Math.max(policy.minReplicas, Math.ceil(rps / policy.nominalRpsPerReplica)),
-      currentLatencyP99: latencyBase,
-      carbonIntensity: intensity,
-      policy,
-      lastScaleTimestamp: 0,
-      now: Date.now() + i * 3600000,
-    });
-
-    const actualBaseCpu = Math.min(100, Math.max(15, Math.round((rps / (decision.baselineReplicas * policy.nominalRpsPerReplica)) * policy.baseCpuThreshold)));
-    const actualOptCpu = Math.min(100, Math.max(15, Math.round((rps / (decision.targetReplicas * policy.nominalRpsPerReplica)) * policy.baseCpuThreshold)));
-
-    const comparative = computeComparativeSavings(
-      { replicas: decision.baselineReplicas, cpuPercent: actualBaseCpu },
-      { replicas: decision.targetReplicas, cpuPercent: actualOptCpu },
-      3600, // 1 hour window
-      intensity
-    );
-
-    cumBaseKWh += comparative.baseKWh;
-    cumOptKWh += comparative.optKWh;
-    cumBaseEmissionsGrams += comparative.baseEmissionsGrams;
-    cumOptEmissionsGrams += comparative.optEmissionsGrams;
-
-    totalSloChecks++;
-    if (decision.explanationTrace.sloGuardrailCheck.isCompliant) {
-      sloCompliantChecks++;
-    }
-
-    results.push({
-      hour: i,
-      timestamp: `${String(i).padStart(2, '0')}:00`,
-      workloadRps: rps,
-      carbonIntensityGCO2: intensity,
-      standardHpaReplicas: decision.baselineReplicas,
-      carbonPilotReplicas: decision.targetReplicas,
-      replicasAvoided: decision.baselineReplicas - decision.targetReplicas,
-      targetCpuPercent: decision.targetCpuThreshold,
-      p99LatencyMs: decision.explanationTrace.sloGuardrailCheck.estimatedLatencyP99,
-      sloCeilingMs: policy.sloLatencyCeilingMs,
-      baseKWh: Number(comparative.baseKWh.toFixed(3)),
-      optKWh: Number(comparative.optKWh.toFixed(3)),
-      emissionsSavedGrams: Number(comparative.emissionsAvoidedGrams.toFixed(1)),
-      guardrailActive: decision.guardrailActive,
-      decisionAction: decision.decisionAction,
-      justification: decision.reason,
-    });
-  }
-
-  const netCarbonAvoidedKg = Number(((cumBaseEmissionsGrams - cumOptEmissionsGrams) / 1000).toFixed(2));
-  const netEnergySavedKWh = Number((cumBaseKWh - cumOptKWh).toFixed(2));
-  const netPercentageAvoided = Number((((cumBaseEmissionsGrams - cumOptEmissionsGrams) / cumBaseEmissionsGrams) * 100).toFixed(1));
-  const sloComplianceRate = Number(((sloCompliantChecks / totalSloChecks) * 100).toFixed(2));
-
-  return {
-    scenarioId: scenario.id,
-    scenarioName: scenario.name,
-    totalHours: scenario.hours,
-    summary: {
-      baselineTotalEmissionsKg: Number((cumBaseEmissionsGrams / 1000).toFixed(2)),
-      carbonPilotTotalEmissionsKg: Number((cumOptEmissionsGrams / 1000).toFixed(2)),
-      netCarbonAvoidedKg,
-      netPercentageAvoided,
-      baselineTotalEnergyKWh: Number(cumBaseKWh.toFixed(2)),
-      carbonPilotTotalEnergyKWh: Number(cumOptKWh.toFixed(2)),
-      netEnergySavedKWh,
-      sloComplianceRate,
-      sloViolationsCount: totalSloChecks - sloCompliantChecks,
-    },
-    hourlyTrace: results,
-  };
 }
 
 export function createApiServer() {
@@ -294,6 +96,17 @@ export function createApiServer() {
     // ROUTE: Get all policies
     if (pathname === '/api/policies' && req.method === 'GET') {
       return sendJson(200, readPolicies());
+    }
+
+    // ROUTE: Get single policy by ID
+    if (pathname.startsWith('/api/policies/') && req.method === 'GET') {
+      const policyId = pathname.replace('/api/policies/', '');
+      const policies = readPolicies();
+      const policy = policies.find((p) => p.id === policyId || p.serviceName === policyId);
+      if (!policy) {
+        return sendJson(404, { error: `Policy ${policyId} not found` });
+      }
+      return sendJson(200, policy);
     }
 
     // ROUTE: Update a policy
