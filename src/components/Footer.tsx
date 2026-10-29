@@ -7,8 +7,8 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-7 h-7 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-              <Leaf className="w-4 h-4" />
+            <div className="bg-white/95 px-2 py-1 rounded border border-slate-700 flex items-center justify-center">
+              <img src="/klh-logo.png" alt="KLH Logo" className="h-6 object-contain" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -17,10 +17,10 @@ export const Footer: React.FC = () => {
                   v1alpha1
                 </span>
                 <span className="text-slate-500">•</span>
-                <span className="text-slate-400">Kubernetes Auto-Scaling Orchestrator</span>
+                <span className="text-slate-400">KLH Deemed to be University, Bowrampet</span>
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5">
-                CNAD Review — Cloud-Native Architecture & Design
+                Department of Computer Science & Engineering • CNAD Review Project
               </p>
             </div>
           </div>

@@ -41,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navLinks = [
     { id: 'overview', label: 'Overview' },
+    { id: 'presentation', label: 'Presentation Deck' },
     { id: 'architecture', label: 'Architecture' },
     { id: 'simulator', label: 'Operator Simulator' },
     { id: 'dashboard', label: 'Live Telemetry' },
@@ -63,9 +64,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center justify-between h-15">
             {/* Logo and Product Title */}
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                <Leaf className="w-4 h-4" />
+              {/* Authentic KLH Deemed to be University Logo */}
+              <div className="bg-white/95 px-2 py-1 rounded-md border border-slate-700/60 shadow-sm flex items-center justify-center">
+                <img 
+                  src="/klh-logo.png" 
+                  alt="KLH Deemed to be University" 
+                  className="h-6 sm:h-7 object-contain" 
+                />
               </div>
+
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-base tracking-tight text-white font-sans">
@@ -76,7 +83,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 hidden sm:block leading-none">
-                  Carbon-Aware Auto-Scaling Orchestrator
+                  CNAD Review • KLH Bowrampet Campus
                 </p>
               </div>
             </div>

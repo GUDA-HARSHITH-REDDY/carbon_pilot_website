@@ -7,6 +7,7 @@ import { LiveDashboard } from './components/LiveDashboard';
 import { CrdInspector } from './components/CrdInspector';
 import { TechStackMatrix } from './components/TechStackMatrix';
 import { BenchmarkEvaluation } from './components/BenchmarkEvaluation';
+import { PresentationDeck } from './components/PresentationDeck';
 import { DemoScriptModal } from './components/DemoScriptModal';
 import { Footer } from './components/Footer';
 import { INITIAL_REGIONS, INITIAL_MICROSERVICES } from './data/mockData';
@@ -88,6 +89,13 @@ export function App() {
               <section id="techstack-overview">
                 <TechStackMatrix />
               </section>
+            </div>
+          )}
+
+          {/* TAB: Presentation Deck (KLH Review Deck) */}
+          {activeTab === 'presentation' && (
+            <div className="animate-fade-in">
+              <PresentationDeck />
             </div>
           )}
 
